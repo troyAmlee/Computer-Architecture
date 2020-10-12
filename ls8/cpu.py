@@ -7,7 +7,15 @@ class CPU:
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.ram = [0] * 256
+        self.reg = [0] * 8
+        self.pc = 0
+
+    def ram_read(self, MAR):
+        return self.ram[MAR]
+
+    def ram_write(self, MAR, MDR):
+        self.ram[MAR] = MDR
 
     def load(self):
         """Load a program into memory."""
@@ -62,4 +70,21 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        IR = self.ram_read(self.pc)
+        while(IR != 0b00000001):
+            IR = self.ram_read(self.pc)
+            if(IR == 0b10000010):
+                address = self.ram[self.pc + 1]
+                value = self.ram[self.pc + 2]
+                self.ram_write(address, value)
+                self.pc += (IR//64) + 1
+            elif(IR == 0b01000111):
+                address = self.ram[self.pc + 1]
+                print(self.ram_read(address))
+                self.pc += (IR//64) + 1
+            elif(IR == 0b00000001):
+                break
+            else:
+                print(f"Error, the instruction {IR} at address {self.pc} is not recognized")
+                sys.exit()
+
