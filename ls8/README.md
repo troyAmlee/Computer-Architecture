@@ -60,6 +60,8 @@ but you'll have to implement those three above instructions first!
 ## Step 0: IMPORTANT: inventory what is here!
 
 * Make a list of files here.
+# examples: these hold the examples of instruction sequences in memory in order to run the programs
+# cpu.py: Holds the programs and memory
 * Write a short 3-10-word description of what each file does.
 * Note what has been implemented, and what hasn't.
 * Read this whole file.
