@@ -90,8 +90,23 @@ class CPU:
         MUL = 0b10100010
         SP = 7
         self.reg[SP] = 0xF4
+        CALL = 0b01010000
+        RET = 0b00010001
+        ADD = 0b10100000
+
+        def push_val(value):
+            self.reg[SP] -= 1
+            top_of_stack_addr = self.reg[SP]
+            self.ram_write(top_of_stack_addr, value)
+
+        def pop_val():
+            top_of_stack_addr = self.reg[SP]
+            value = self.ram[top_of_stack_addr]
+            self.reg[SP] += 1
+            return value
 
         while(IR != HALT):
+            # self.trace()
             operand_a = self.ram[self.pc + 1]
             operand_b = self.ram[self.pc + 2]
             IR = self.ram[self.pc]
@@ -116,6 +131,13 @@ class CPU:
                 
                 val2 = operand_b
 
+                self.alu(ope, val1, val2)
+                self.pc += (IR//64) + 1
+
+            elif(IR == ADD):
+                ope = "ADD"
+                val1 = operand_a
+                val2 = operand_b
                 self.alu(ope, val1, val2)
                 self.pc += (IR//64) + 1
 
@@ -145,6 +167,19 @@ class CPU:
                 self.pc += (IR//64) + 1
 
                 print(f'POP: {self.ram[0xf0:0xf4]}')
+
+            elif(IR == CALL):
+                return_addr = self.pc + (IR//64) + 1
+                push_val(return_addr)
+                reg_num = self.ram[self.pc + 1]
+                subroutine_addr = self.reg[reg_num]
+                self.pc = subroutine_addr
+
+
+            elif(IR == RET):
+                return_addr = pop_val()
+                self.pc = return_addr
+
             elif(IR == HALT):
                 break
             else:
