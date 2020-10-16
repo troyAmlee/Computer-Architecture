@@ -11,6 +11,7 @@ class CPU:
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0
+        self.flag = 0b00000000
 
     def ram_read(self, MAR):
         print(f"READING... {self.ram[MAR]}")
@@ -55,7 +56,21 @@ class CPU:
             self.reg[reg_a] ** 0.5
         elif op == "POW":
             self.reg[reg_a] **= self.reg[reg_b]
-
+        elif op == "CMP":
+            # `FL` bits: `00000LGE`
+            if(self.reg[reg_a] < self.reg[reg_b]):
+                self.flag = 0b00000100
+            else:
+                self.flag = 0b00000000
+            if(self.reg[reg_a] > self.reg[reg_b]):
+                self.flag = 0b00000010
+            else:
+                self.flag = 0b00000000
+            if(self.reg[reg_a] == self.reg[reg_b]):
+                self.flag = 0b00000001
+            else:
+                self.flag = 0b00000000
+            
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -90,10 +105,17 @@ class CPU:
         MUL = 0b10100010
         SP = 7
         self.reg[SP] = 0xF4
+        FL = 0b00000011
+        FL |= 0b00000001
+        
         CALL = 0b01010000
         RET = 0b00010001
         ADD = 0b10100000
-
+        CMP = 0b10100111
+        JMP = 0b01010100
+        JEQ = 0b01010101
+        JNE = 0b01010110
+        print(f'FL: {bin(FL)}')
         def push_val(value):
             self.reg[SP] -= 1
             top_of_stack_addr = self.reg[SP]
@@ -141,6 +163,13 @@ class CPU:
                 self.alu(ope, val1, val2)
                 self.pc += (IR//64) + 1
 
+            elif(IR == CMP):
+                ope = "CMP"
+                val1 = operand_a
+                val2 = operand_b
+                self.alu(ope, val1, val2)
+                self.pc += (IR//64) + 1
+
             elif(IR == PUSH):
                 self.reg[SP] -= 1
 
@@ -179,6 +208,33 @@ class CPU:
             elif(IR == RET):
                 return_addr = pop_val()
                 self.pc = return_addr
+
+            elif(IR == JMP):
+                
+                # Jump to the address stored in the given register.
+                addr = self.reg[operand_a]
+                # Set the `PC` to the address stored in the given register.
+                self.pc = addr
+                '''
+                Machine code:
+                ```
+                01010100 00000rrr
+                54 0r
+                ```
+                '''
+            elif(IR == JEQ):
+                if(self.flag == 0b00000001):
+                    addr = self.reg[operand_a]
+                    self.pc = addr
+                else:
+                    self.pc += (IR//64) + 1
+
+            elif(IR == JNE):
+                if(self.flag == 0b00000000):
+                    addr = self.reg[operand_a]
+                    self.pc = addr
+                else:
+                    self.pc += (IR//64) + 1
 
             elif(IR == HALT):
                 break
